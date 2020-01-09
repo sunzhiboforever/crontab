@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>调度系统</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editModal" onclick="create()">新建任务</button>
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <td>任务名称</td>
+            <td>任务命令</td>
+            <td>任务表达式</td>
+            <td>操作</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>12312312312<td>
+            <td>45645646</td>
+            <td>80898989</td>
+            <td>
+                <button type="button" class="btn btn-primary">（首选项）Primary</button>
+                <button type="button" class="btn btn-success">（成功）Success</button>
+                <button type="button" class="btn btn-danger">（危险）Danger</button>
+            </td>
+        </tr>
+    </tbody>
+</table>
+</body>
+</html>
+
+<!-- 编辑弹出框 -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">编辑</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label for="name">名称</label>
+                        <input type="text" class="form-control" id="name" placeholder="任务名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="command">命令</label>
+                        <input type="text" class="form-control" id="command" placeholder="任务命令">
+                    </div>
+                    <div class="form-group">
+                        <label for="cron_exp">任务表达式</label>
+                        <input type="text" class="form-control" id="cron_expr" placeholder="任务表达式">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="save()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    //TODO 以后一定重写，先将就一下，太烂了
+    let table = "";
+    table += "<td>";
+    table += '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editModal" onclick="edit(this)">编辑</button>';
+    table += '<button type="button" class="btn btn-danger" onclick="del(this)">删除</button>';
+    table += '<button type="button" class="btn btn-warning">杀死</button>';
+    table += '</td>';
+
+    $(function(){
+        // 加载表哥显示数据
+        $.get("/job/list", function(data){
+            let html = "";
+            $.each(data.data, function(i, item) {
+                html += "<tr>";
+                html += "<td name='name'>"+item.name+"</td>";
+                html += "<td name='command'>"+item.command+"</td>";
+                html += "<td name='cron_expr'>"+item.cron_expr+"</td>";
+                html += table;
+                html += "</tr>";
+            }, 'json');
+            $("table > tbody").html(html);
+        });
+    });
+
+    // 编辑按钮事件
+    // TODO js其实有委托机制来绑定未出现的元素，还没搞明白
+    function edit(_this) {
+
+        let name = $(_this).parent().parent().find("td").eq(0).html();
+        let command = $(_this).parent().parent().find("td").eq(1).html();
+        let cron_expr = $(_this).parent().parent().find("td").eq(2).html();
+
+        $("#name").attr("placeholder", name);
+        $("#name").val(name);
+        $("#command").attr("placeholder", command);
+        $("#command").val(command);
+        $("#cron_expr").attr("placeholder", cron_expr);
+        $("#cron_expr").val(cron_expr);
+
+        $("#name").attr("disabled", "disabled");
+    }
+
+    // 编辑窗口保存事件
+    function save() {
+        let name = $("#name").val();
+        let command = $("#command").val();
+        let cron_expr = $("#cron_expr").val();
+
+        let jsonArray = {};
+        jsonArray['name'] = name;
+        jsonArray['command'] = command;
+        jsonArray['cron_expr'] = cron_expr;
+        let json = JSON.stringify(jsonArray);
+        $.post("/job/save", {job:json}, function(data){
+            alert(data.err_msg);
+            window.location.reload();
+        },'json');
+    }
+
+    // 新建任务
+    function create() {
+        // 取消编辑按钮设置的值和名称不可变的状态
+        $("#name").attr("placeholder", "任务名称");
+        $("#command").attr("placeholder", "任务命令");
+        $("#cron_expr").attr("placeholder", "任务表达式");
+
+        $("#name").val("");
+        $("#command").val("");
+        $("#cron_expr").val("");
+
+        $("#name").removeAttr("disabled", "disabled");
+    }
+
+    // 删除任务
+    function del(_this) {
+        let name = $(_this).parent().parent().find("td").eq(0).html();
+        $.post("/job/delete", {name:name}, function(data){
+            alert(data.err_msg);
+            window.location.reload();
+        },'json');
+    }
+
+    // 杀死任务
+    function kill(_this) {
+        let name = $(_this).parent().parent().find("td").eq(0).html();
+        $.post("/job/kill", {name:name}, function(data){
+            alert(data.err_msg);
+            window.location.reload();
+        },'json');
+    }
+</script>

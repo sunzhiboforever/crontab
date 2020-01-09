@@ -1,0 +1,9 @@
+{
+  "api_port": 9090,
+  "api_write_timeout": 5,
+  "api_read_timeout": 5,
+  "etcd_end_point": [
+    "127.0.0.1:2379"
+  ],
+  "etcd_dial_timeout": 5000
+}
